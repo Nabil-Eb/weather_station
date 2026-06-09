@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Sensor Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --temp-color: #06b6d4;
+            --humidity-color: #10b981;
+            --state-color: #a855f7;
+            --text-main: #f8fafc;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.15) 0px, transparent 50%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            box-sizing: border-box;
+            transition: background-color 0.8s ease, background-image 0.8s ease;
+        }
+
+        body.warning-mode {
+            background-color: #2e2403;
+            background-image: 
+                radial-gradient(at 50% 50%, rgba(234, 179, 8, 0.2) 0px, transparent 70%);
+        }
+
+        body.danger-mode {
+            background-color: #450a0a;
+            background-image: 
+                radial-gradient(at 50% 50%, rgba(239, 68, 68, 0.3) 0px, transparent 70%);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+            animation: fadeInDown 1s ease-out;
+            transition: text-shadow 0.5s ease;
+        }
+
+        body.warning-mode h1 {
+            text-shadow: 0 0 20px rgba(234, 179, 8, 0.5);
+        }
+
+        body.danger-mode h1 {
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+        }
+
+        .dashboard {
+            display: flex;
+            gap: 25px;
+            max-width: 1200px;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 35px 25px;
+            flex: 1;
+            min-width: 250px;
+            max-width: 320px;
+            height: 240px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-sizing: border-box;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .card.temp:hover { border-color: var(--temp-color); }
+        .card.humidity:hover { border-color: var(--humidity-color); }
+        
+        .card.state:hover { border-color: var(--state-color); }
+        body.warning-mode .card.state { border-color: #eab308; }
+        body.danger-mode .card.state { border-color: #ef4444; }
+
+        .icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .card.temp .icon { animation: pulseTemp 2s infinite; }
+        .card.humidity .icon { animation: floatHum 3s ease-in-out infinite; }
+        .card.state .icon { animation: pulseState 2s infinite; }
+
+        h2 {
+            font-size: 1.2rem;
+            margin: 0 0 10px 0;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+        }
+
+        .value {
+            font-size: 3.2rem;
+            font-weight: 800;
+            font-family: 'Courier New', Courier, monospace;
+            margin-bottom: 10px;
+            transition: all 0.5s ease;
+        }
+
+        .temp .value { color: var(--temp-color); text-shadow: 0 0 15px rgba(6, 182, 212, 0.3); }
+        .humidity .value { color: var(--humidity-color); text-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+        
+        .state .value { color: var(--state-color); text-shadow: 0 0 15px rgba(168, 85, 247, 0.3); }
+        
+        body.warning-mode .state .value {
+            color: #eab308;
+            text-shadow: 0 0 20px rgba(234, 179, 8, 0.6);
+        }
+
+        body.danger-mode .state .value { 
+            color: #ef4444; 
+            text-shadow: 0 0 25px rgba(239, 68, 68, 0.8);
+            animation: blink 1s infinite;
+        }
+
+        .status {
+            font-size: 0.85rem;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px #22c55e;
+            animation: blink 1.5s infinite;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .dashboard { gap: 15px; }
+            .card { max-width: 100%; }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulseTemp {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 8px var(--temp-color)); }
+        }
+        @keyframes floatHum {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes pulseState {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.08); opacity: 1; }
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Smart Telemetry Dashboard</h1>
+
+    <div class="dashboard">
+        <div class="card temp">
+            <div class="icon">🌡️</div>
+            <h2>Temperature</h2>
+            <div class="value" id="temp-val">--</div>
+            <div class="status"><span class="pulse-dot"></span> Live Updates</div>
+        </div>
+
+        <div class="card humidity">
+            <div class="icon">💧</div>
+            <h2>Humidity</h2>
+            <div class="value" id="humidity-val">--</div>
+            <div class="status"><span class="pulse-dot"></span> Live Updates</div>
+        </div>
+
+        <div class="card state">
+            <div class="icon" id="state-icon">✅</div>
+            <h2>Room State</h2>
+            <div class="value" id="state-val" style="font-size: 2.2rem; font-family: 'Segoe UI', sans-serif;">--</div>
+            <div class="status"><span class="pulse-dot"></span> Automated</div>
+        </div>
+    </div>
+
+    <script>
+        const blynkToken = "KijefzHLjp9kwfCsht-X4wpG74rrn1lz"; 
+
+        const tempUrl = `https://blynk.cloud/external/api/get?token=${blynkToken}&v0`;
+        const humidUrl = `https://blynk.cloud/external/api/get?token=${blynkToken}&v1`;
+
+        async function fetchLiveMetrics() {
+            try {
+                const tempRes = await fetch(tempUrl);
+                const tempText = await tempRes.text(); 
+                
+                const humidRes = await fetch(humidUrl);
+                const humidText = await humidRes.text();
+
+                const tempElement = document.getElementById('temp-val');
+                const humElement = document.getElementById('humidity-val');
+                const stateElement = document.getElementById('state-val');
+                const iconElement = document.getElementById('state-icon');
+
+                let currentTemp = 0;
+
+                if (tempText && !tempText.includes("Invalid") && !tempText.includes("not found")) {
+                    currentTemp = parseFloat(tempText);
+                    tempElement.innerText = currentTemp.toFixed(1) + "°C";
+
+                    if (currentTemp > 40.0) {
+                        document.body.classList.remove('warning-mode');
+                        document.body.classList.add('danger-mode');
+                        stateElement.innerText = "DANGER";
+                        iconElement.innerText = "🚨";
+                    } else if (currentTemp >= 35.0) {
+                        document.body.classList.remove('danger-mode');
+                        document.body.classList.add('warning-mode');
+                        stateElement.innerText = "WARNING";
+                        iconElement.innerText = "⚠️";
+                    } else {
+                        document.body.classList.remove('danger-mode', 'warning-mode');
+                        stateElement.innerText = "System Safe";
+                        iconElement.innerText = "✅";
+                    }
+                }
+
+                if (humidText && !humidText.includes("Invalid") && !humidText.includes("not found")) {
+                    const currentHumid = parseFloat(humidText);
+                    humElement.innerText = currentHumid.toFixed(1) + "%";
+                }
+
+            } catch (err) {
+                console.error("Error fetching data from Blynk API:", err);
+            }
+        }
+
+        fetchLiveMetrics();
+        setInterval(fetchLiveMetrics, 2000);
+    </script>
+</body>
+</html>
